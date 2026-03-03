@@ -2,6 +2,8 @@
 
 Use these blueprints so the chatbot gets **order status as JSON** (with `replyText` and `order`), not plain "Accepted".
 
+**Important:** Both blueprints are set to **respond after the scenario finishes** (`instant: false`). That way Make uses the **Webhook response** modules to return JSON instead of the default "Accepted" text. After importing, reconnect OpenAI/Google and copy the new webhook URLs into `config.js`.
+
 ---
 
 ## 1. Order Tracking (SYNC – Returns Final JSON)
