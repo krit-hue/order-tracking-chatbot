@@ -139,6 +139,26 @@
         const sessionId = getSessionId();
         const data = await callWebhook(text);
 
+        // Special case: Make.com default plain-text "Accepted" ack
+        const isAcceptedAck =
+          data &&
+          typeof data.replyText === "string" &&
+          data.replyText.trim().toLowerCase() === "accepted";
+
+        if (isAcceptedAck && RESULT_URL) {
+          removeTyping();
+          setStatus("Fetching final update…");
+          const finalData = await pollFinal(sessionId);
+          setStatus("Ready");
+
+          if (finalData?.replyText) {
+            appendMessage({ role: "assistant", text: finalData.replyText });
+          } else {
+            appendMessage({ role: "assistant", text: "Still working on it — try again in a moment." });
+          }
+          return;
+        }
+
         removeTyping();
         setStatus("Ready");
 
