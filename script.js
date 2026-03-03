@@ -218,6 +218,17 @@
       const cur = document.documentElement.dataset.theme || "dark";
       document.documentElement.dataset.theme = cur === "dark" ? "light" : "dark";
     });
+
+    // Quick-action chips: put suggestion in input and send
+    document.querySelectorAll(".chip[data-suggest]").forEach((chip) => {
+      chip.addEventListener("click", () => {
+        const text = (chip.getAttribute("data-suggest") || "").trim();
+        if (text) {
+          inputEl.value = text;
+          sendBtn.click();
+        }
+      });
+    });
   }
 
   document.addEventListener("DOMContentLoaded", () => {
