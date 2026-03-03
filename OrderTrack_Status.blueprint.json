@@ -54,7 +54,7 @@
                     [
                         {
                             "a": "A",
-                            "b": "{{5.query.jobId}}",
+                            "b": "{{2.query.jobId}}",
                             "o": "text:equal"
                         }
                     ]
@@ -70,14 +70,7 @@
             "metadata": {
                 "designer": {
                     "x": -232,
-                    "y": -120,
-                    "messages": [
-                        {
-                            "category": "reference",
-                            "severity": "warning",
-                            "message": "Referenced module 'Webhooks - Webhook response' [5] is not accessible."
-                        }
-                    ]
+                    "y": -120
                 },
                 "restore": {
                     "expect": {
@@ -3801,7 +3794,7 @@
                 ]
             },
             "mapper": {
-                "body": "{{2.3}}",
+                "body": "{{3.2}}",
                 "status": "200",
                 "headers": [
                     {
