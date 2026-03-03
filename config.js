@@ -8,7 +8,8 @@ window.ORDER_BOT_CONFIG = {
   WEBHOOK_URL: "https://hook.us2.make.com/wa2vcgggy1pn53tl6oaf2vholgv3306d",
 
   // Set true to allow local demo lookup using orders.sample.json when webhook is empty/unavailable
-  ALLOW_LOCAL_FALLBACK: true
+  ALLOW_LOCAL_FALLBACK: false
 
 };
+
 
