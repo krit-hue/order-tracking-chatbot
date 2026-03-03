@@ -818,7 +818,7 @@
                 "type": ""
             },
             "mapper": {
-                "json": "{{3.choices[0].message.content}}"
+                "json": "{{ifempty(3.choices[0].message.content; '{\"orderNumber\": null}')}}"
             },
             "metadata": {
                 "designer": {
