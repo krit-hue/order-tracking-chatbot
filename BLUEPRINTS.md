@@ -73,3 +73,17 @@ The chatbot expects the webhook to respond with **HTTP 200** and **Content-Type:
 ```
 
 Both blueprints are set up to return this format (with the correct headers) so the site shows order status instead of "Accepted".
+
+---
+
+## Troubleshooting
+
+- **BundleValidationError – Missing value of required parameter 'json'**  
+  The Parse JSON module is getting an empty value from OpenAI. The blueprint uses `ifempty(3.choices[0].message.content; '{"orderNumber": null}')` so re-import the latest blueprint, or in the Parse JSON module set **JSON string** to:  
+  `{{ifempty(3.choices[0].message.content; '{"orderNumber": null}')}}`
+
+- **500 Internal Server Error**  
+  Open the scenario in Make.com → **Execution history** → failed run → find the **red (failed) module**. Fix that (reconnect OpenAI/Google, correct sheet name, or fix the mapping). The chatbot will also try polling RESULT_URL when the main webhook returns 500.
+
+- **Chatbot shows "Accepted" or no order status**  
+  In the **Custom webhook** (first module), set **Respond to webhook** to **“After the scenario is completed”** (not “Immediately”) so Make sends your JSON response instead of the default “Accepted”.

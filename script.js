@@ -105,8 +105,13 @@
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ message, sessionId })
     });
-    if (!res.ok) throw new Error(`Webhook error: ${res.status}`);
-    return await fetchJsonOrText(res);
+    if (res.ok) return await fetchJsonOrText(res);
+    // 500/502: scenario may still have written result for async flow — try polling
+    if ((res.status === 500 || res.status === 502) && RESULT_URL) {
+      const polled = await pollFinal(sessionId);
+      if (polled?.replyText) return polled;
+    }
+    throw new Error(`Webhook error: ${res.status}`);
   }
 
   // ✅ Poll RESULT_URL?jobId=<sessionId> until processing:false
@@ -196,13 +201,12 @@
     } catch (err) {
       removeTyping();
       setStatus("Error");
+      const is500 = String(err?.message || "").includes("500") || String(err?.message || "").includes("502");
       appendMessage({
         role: "assistant",
-        text:
-`Something went wrong while checking that order.
-• Confirm webhook URL in config.js
-• Verify Make returns JSON
-• Check CORS`
+        text: is500
+          ? "The order service returned an error. Check your Make.com scenario: open Execution history, find the failed run, and fix the red module (e.g. OpenAI connection, Google Sheets, or Parse JSON). Then try again."
+          : `Something went wrong while checking that order.\n• Confirm webhook URL in config.js\n• Verify Make returns JSON\n• Check CORS`
       });
       console.error(err);
       setTimeout(() => setStatus("Ready"), 1200);
