@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Order Tracking Assistant</title>
+  <meta name="description" content="Track your orders instantly with a modern AI-powered chat assistant." />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="styles.css" />
+</head>
+
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <div class="logo">
+        <span class="logo-dot"></span>
+      </div>
+      <div class="brand-text">
+        <div class="brand-title">Order Tracking Assistant</div>
+        <div class="brand-subtitle">Fast updates • Clean UI • Friendly help</div>
+      </div>
+    </div>
+
+    <div class="topbar-actions">
+      <button id="themeToggle" class="icon-btn" type="button" aria-label="Toggle theme" title="Toggle theme">
+        <span class="icon">🌓</span>
+      </button>
+      <button id="clearChat" class="icon-btn" type="button" aria-label="Clear chat" title="Clear chat">
+        <span class="icon">🧹</span>
+      </button>
+    </div>
+  </header>
+
+  <main class="shell">
+    <section class="hero">
+      <h1>Track your order in seconds</h1>
+      <p>
+        Type your order number (e.g., <strong>1001</strong>) or paste a message like
+        “Where is my order #1001?” and I’ll find the latest status.
+      </p>
+
+      <div class="quick-actions" aria-label="Quick actions">
+        <button class="chip" data-suggest="Track order 1001">Try a sample</button>
+        <button class="chip" data-suggest="Where is order #1002?">Natural language</button>
+        <button class="chip" data-suggest="Help">What can you do?</button>
+      </div>
+    </section>
+
+    <section class="chat-card" aria-label="Chat">
+      <div class="chat-header">
+        <div class="status-pill">
+          <span class="status-dot" aria-hidden="true"></span>
+          <span id="statusText">Ready</span>
+        </div>
+
+        <div class="privacy-note" title="No secrets stored in the browser">
+          🔒 Uses a secure webhook for lookups
+        </div>
+      </div>
+
+      <div id="messages" class="messages" role="log" aria-live="polite" aria-relevant="additions"></div>
+
+      <div class="composer">
+        <div class="composer-left">
+          <input id="userInput" type="text" inputmode="text" autocomplete="off"
+                 placeholder="Ask about an order… (ex: Track #1001)"
+                 aria-label="Message input" />
+          <div id="hint" class="hint">Tip: you can type “help” for examples.</div>
+        </div>
+
+        <button id="sendBtn" class="send-btn" type="button" aria-label="Send message">
+          <span class="send-icon">➤</span>
+        </button>
+      </div>
+    </section>
+
+    <footer class="footer">
+      <p>
+        Demo site for an AI automation workflow. Connect to Make.com or n8n for secure order lookup.
+      </p>
+    </footer>
+  </main>
+
+  <script src="config.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>

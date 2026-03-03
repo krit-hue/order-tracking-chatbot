@@ -1,0 +1,28 @@
+{
+  "orders": [
+    {
+      "orderNumber": "1001",
+      "customerName": "John Smith",
+      "status": "Shipped",
+      "eta": "Mar 7, 2026",
+      "trackingUrl": "https://example.com/track/1001",
+      "lastUpdated": "Mar 3, 2026 10:18 AM"
+    },
+    {
+      "orderNumber": "1002",
+      "customerName": "Maria Lee",
+      "status": "Processing",
+      "eta": "Mar 9, 2026",
+      "trackingUrl": "",
+      "lastUpdated": "Mar 3, 2026 9:41 AM"
+    },
+    {
+      "orderNumber": "1003",
+      "customerName": "Alex Johnson",
+      "status": "Delivered",
+      "eta": "Delivered",
+      "trackingUrl": "https://example.com/track/1003",
+      "lastUpdated": "Mar 2, 2026 4:02 PM"
+    }
+  ]
+}
