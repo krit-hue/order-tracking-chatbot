@@ -3,7 +3,7 @@ window.ORDER_BOT_CONFIG = {
 
   // IMPORTANT: Set this after you create Scenario #2 (polling webhook)
   // Example: "https://hook.us2.make.com/xxxxxxxxxxxxxxxxxxxx"
-  RESULT_URL: "PASTE_YOUR_RESULT_WEBHOOK_URL_HERE",
+  RESULT_URL: "https://hook.us2.make.com/449a8ht3xgu5ewqmnobispr6iipyq8es",
 
   POLL_INTERVAL_MS: 1500,
   POLL_TIMEOUT_MS: 25000,
