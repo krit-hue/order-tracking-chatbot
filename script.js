@@ -1,6 +1,6 @@
 /* Order Tracking Assistant - GitHub Pages friendly (static frontend)
    - Sends chat messages to Make.com/n8n webhook
-   - Renders modern chat UI + order status card
+   - Renders chat UI + optional order status card
    - Saves chat history to localStorage
 */
 
@@ -24,11 +24,15 @@
   const WEBHOOK_URL = (cfg.WEBHOOK_URL || "").trim();
   const ALLOW_LOCAL_FALLBACK = cfg.ALLOW_LOCAL_FALLBACK !== false;
 
+  // Optional (for async design): a separate endpoint to fetch final results by jobId
+  // Example:
+  // window.ORDER_BOT_CONFIG.RESULT_URL = "https://your-result-endpoint.example.com/result";
+  const RESULT_URL = (cfg.RESULT_URL || "").trim();
+
   let localOrders = null;
 
-  function setStatus(text, ok = true) {
-    statusText.textContent = text;
-    // dot color via css variable not needed; keep simple
+  function setStatus(text) {
+    if (statusText) statusText.textContent = text;
   }
 
   function timeStamp() {
@@ -36,10 +40,15 @@
     return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
   }
 
+  // FIX: actually escape HTML
   function escapeHtml(s) {
-    return s.replace(/[&<>"']/g, (c) => ({
-      "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
-    }[c]));
+    return String(s).replace(/[&<>"']/g, (c) => ({
+      "&": "&amp;",
+      "<": "&lt;",
+      ">": "&gt;",
+      '"': "&quot;",
+      "'": "&#39;"
+    })[c]);
   }
 
   function appendMessage({ role, text, card }) {
@@ -48,6 +57,7 @@
 
     const avatar = document.createElement("div");
     avatar.className = "avatar";
+
     const img = document.createElement("img");
     img.src = role === "user" ? AVATAR_USER : AVATAR_ASSIST;
     img.alt = role;
@@ -56,15 +66,8 @@
     const bubble = document.createElement("div");
     bubble.className = "bubble";
 
-    // Text (supports simple line breaks)
-    if (text) {
-      bubble.innerHTML = escapeHtml(text);
-    }
-
-    // Optional card
-    if (card) {
-      bubble.appendChild(renderOrderCard(card));
-    }
+    if (text) bubble.innerHTML = escapeHtml(text).replace(/\n/g, "<br/>");
+    if (card) bubble.appendChild(renderOrderCard(card));
 
     const meta = document.createElement("div");
     meta.className = "meta";
@@ -87,6 +90,7 @@
 
     const avatar = document.createElement("div");
     avatar.className = "avatar";
+
     const img = document.createElement("img");
     img.src = AVATAR_ASSIST;
     img.alt = "assistant";
@@ -120,11 +124,11 @@
       eta,
       trackingUrl,
       lastUpdated
-    } = order;
+    } = order || {};
 
     const badgeClass =
-      /delivered/i.test(status) ? "ok" :
-      /cancel|lost|error/i.test(status) ? "warn" :
+      /delivered/i.test(status || "") ? "ok" :
+      /cancel|lost|error/i.test(status || "") ? "warn" :
       "ok";
 
     const card = document.createElement("div");
@@ -132,7 +136,7 @@
 
     card.innerHTML = `
       <div class="card-title">
-        <span>Order #${escapeHtml(String(orderNumber || ""))}</span>
+        <span>Order #${escapeHtml(orderNumber || "")}</span>
         <span class="badge ${badgeClass}">${escapeHtml(status || "Unknown")}</span>
       </div>
 
@@ -142,11 +146,10 @@
 
       <div class="card-actions">
         ${trackingUrl ? `<a class="btn" href="${trackingUrl}" target="_blank" rel="noopener">📦 Open tracking</a>` : ""}
-        <button class="btn" type="button" data-action="copy" data-copy="${escapeHtml(String(orderNumber || ""))}">📋 Copy order #</button>
+        <button class="btn" type="button" data-action="copy" data-copy="${escapeHtml(orderNumber || "")}">📋 Copy order #</button>
       </div>
     `;
 
-    // hook copy
     card.querySelectorAll('[data-action="copy"]').forEach(btn => {
       btn.addEventListener("click", async () => {
         const val = btn.getAttribute("data-copy") || "";
@@ -164,47 +167,22 @@
   }
 
   function extractOrderNumberLoose(text) {
-    // Common patterns: #1234, order 1234, ORD-1234, 1234
-    const m = text.match(/\b(?:order\s*#?\s*|ord[-\s]*)?([0-9]{3,10})\b/i);
+    const m = String(text).match(/\b(?:order\s*#?\s*|ord[-\s]*)?([0-9]{3,10})\b/i);
     return m ? m[1] : null;
   }
 
+  // FIX: correct filename (order.sample.json)
   async function loadLocalOrders() {
     if (localOrders) return localOrders;
-    const res = await fetch("orders.sample.json", { cache: "no-store" });
+    const res = await fetch("order.sample.json", { cache: "no-store" });
     localOrders = await res.json();
     return localOrders;
   }
 
   async function localLookup(orderNumber) {
     const data = await loadLocalOrders();
-    const found = data.orders.find(o => String(o.orderNumber) === String(orderNumber));
+    const found = data.orders?.find(o => String(o.orderNumber) === String(orderNumber));
     return found ? { ok: true, order: found } : { ok: false };
-  }
-
-  async function callWebhook(message) {
-    // Supports both JSON POST and query param fallback.
-    // Recommended: POST JSON { message: "...", sessionId: "..." }
-    const sessionId = getSessionId();
-
-    const payload = {
-      message,
-      sessionId
-    };
-
-    const res = await fetch(WEBHOOK_URL, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload)
-    });
-
-    if (!res.ok) {
-      throw new Error(`Webhook error: ${res.status}`);
-    }
-
-    // Expected response format (recommended):
-    // { replyText: "...", found: true/false, order: { ... } }
-    return await res.json();
   }
 
   function getSessionId() {
@@ -217,18 +195,66 @@
   }
 
   function cryptoRandomId() {
-    // lightweight random id
     const arr = new Uint8Array(12);
     crypto.getRandomValues(arr);
     return Array.from(arr).map(b => b.toString(16).padStart(2, "0")).join("");
+  }
+
+  // More robust: try JSON, fall back to text
+  async function fetchJsonOrText(res) {
+    const contentType = res.headers.get("content-type") || "";
+    if (contentType.includes("application/json")) {
+      return await res.json();
+    }
+    const txt = await res.text();
+    try {
+      return JSON.parse(txt);
+    } catch {
+      return { replyText: txt };
+    }
+  }
+
+  async function callWebhook(message) {
+    const sessionId = getSessionId();
+    const payload = { message, sessionId };
+
+    const res = await fetch(WEBHOOK_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+
+    if (!res.ok) throw new Error(`Webhook error: ${res.status}`);
+
+    return await fetchJsonOrText(res);
+  }
+
+  // Optional polling support if backend provides jobId + RESULT_URL is configured
+  async function pollResult(jobId, { timeoutMs = 25000, intervalMs = 1500 } = {}) {
+    if (!RESULT_URL) return null;
+
+    const start = Date.now();
+    while (Date.now() - start < timeoutMs) {
+      const url = new URL(RESULT_URL);
+      url.searchParams.set("jobId", jobId);
+
+      const res = await fetch(url.toString(), { method: "GET" });
+      if (res.ok) {
+        const data = await fetchJsonOrText(res);
+        // Expect final result to include found/order/replyText
+        if (data && (data.order || data.found === false || data.found === true) && !data.processing) {
+          return data;
+        }
+      }
+      await new Promise(r => setTimeout(r, intervalMs));
+    }
+    return null;
   }
 
   async function handleUserMessage(text) {
     appendMessage({ role: "user", text });
 
     const lower = text.trim().toLowerCase();
-
-    // Simple local "help"
     if (lower === "help" || lower === "?" || lower.includes("what can you do")) {
       appendMessage({
         role: "assistant",
@@ -247,53 +273,64 @@ Try: “Track order 1001”`
     renderTyping();
 
     try {
-      // If webhook configured, use it
+      // Webhook path
       if (WEBHOOK_URL && WEBHOOK_URL !== "PASTE_YOUR_WEBHOOK_URL_HERE") {
         const data = await callWebhook(text);
 
         removeTyping();
         setStatus("Ready");
 
-        // Flexible handling: if backend returns a card, show it
-        if (data && data.found && data.order) {
-          appendMessage({
-            role: "assistant",
-            text: data.replyText || "Found it — here’s your latest order update:",
-            card: data.order
-          });
+        // Always show replyText if present
+        if (data?.replyText) {
+          // If backend returned an order card, show it
+          if (data.found && data.order) {
+            appendMessage({ role: "assistant", text: data.replyText, card: data.order });
+          } else {
+            appendMessage({ role: "assistant", text: data.replyText });
+          }
         } else {
           appendMessage({
             role: "assistant",
-            text: data.replyText || "I couldn’t find that order. Double-check the number and try again."
+            text: data?.found === false
+              ? "I couldn’t find that order. Double-check the number and try again."
+              : "Received a response, but it didn’t include replyText."
           });
         }
+
+        // Optional async follow-up (only if your backend later supports jobId + RESULT_URL)
+        if (data?.processing && data?.jobId && RESULT_URL) {
+          setStatus("Fetching final update…");
+          const finalData = await pollResult(data.jobId);
+          setStatus("Ready");
+
+          if (finalData) {
+            if (finalData.found && finalData.order) {
+              appendMessage({ role: "assistant", text: finalData.replyText || "Here’s the latest update:", card: finalData.order });
+            } else {
+              appendMessage({ role: "assistant", text: finalData.replyText || "Done." });
+            }
+          } else {
+            appendMessage({ role: "assistant", text: "Still working on it. Please try again in a moment." });
+          }
+        }
+
         return;
       }
 
-      // Otherwise fallback to local demo
+      // Local fallback
       if (ALLOW_LOCAL_FALLBACK) {
         const num = extractOrderNumberLoose(text);
+        removeTyping();
+        setStatus("Ready");
+
         if (!num) {
-          removeTyping();
-          setStatus("Ready");
-          appendMessage({
-            role: "assistant",
-            text: "Please include an order number (example: 1001)."
-          });
+          appendMessage({ role: "assistant", text: "Please include an order number (example: 1001)." });
           return;
         }
 
         const result = await localLookup(num);
-
-        removeTyping();
-        setStatus("Ready");
-
         if (result.ok) {
-          appendMessage({
-            role: "assistant",
-            text: "Found it — here’s your latest order update:",
-            card: result.order
-          });
+          appendMessage({ role: "assistant", text: "Found it — here’s your latest order update:", card: result.order });
         } else {
           appendMessage({
             role: "assistant",
@@ -310,10 +347,7 @@ Try:
 
       removeTyping();
       setStatus("Ready");
-      appendMessage({
-        role: "assistant",
-        text: "Webhook isn’t configured yet. Add your Make.com/n8n webhook URL in config.js."
-      });
+      appendMessage({ role: "assistant", text: "Webhook isn’t configured yet. Add your Make.com/n8n webhook URL in config.js." });
 
     } catch (err) {
       removeTyping();
@@ -339,6 +373,7 @@ If you’re testing:
     messagesEl.querySelectorAll(".msg").forEach(msg => {
       const role = msg.classList.contains("user") ? "user" : "assistant";
       const bubble = msg.querySelector(".bubble");
+
       // store plain text only (cards not persisted)
       const textNodes = Array.from(bubble.childNodes)
         .filter(n => n.nodeType === Node.TEXT_NODE)
@@ -358,7 +393,6 @@ If you’re testing:
     try {
       const items = JSON.parse(raw);
       if (!Array.isArray(items) || items.length === 0) return;
-
       items.forEach(it => appendMessage({ role: it.role, text: it.text }));
     } catch {
       // ignore
@@ -422,12 +456,10 @@ Send an order number like “1001” or ask “Where is my order #1001?”`
     });
   }
 
-  // Boot
   document.addEventListener("DOMContentLoaded", () => {
     initTheme();
     wireUI();
 
-    // restore previous chat or show welcome
     const hasChat = localStorage.getItem(LS_CHAT);
     if (hasChat) restoreChat();
     else seedWelcome();
