@@ -61,7 +61,7 @@
                     },
                     {
                         "role": "user",
-                        "content": "{{1.message}}",
+                        "content": "{{ifempty(1.message; '')}}",
                         "imageDetail": "auto"
                     }
                 ],
@@ -1245,14 +1245,7 @@
             "metadata": {
                 "designer": {
                     "x": -475,
-                    "y": 53,
-                    "messages": [
-                        {
-                            "category": "reference",
-                            "severity": "warning",
-                            "message": "Referenced module 'JSON - Parse JSON' [3] is not accessible."
-                        }
-                    ]
+                    "y": 53
                 },
                 "restore": {
                     "parameters": {
@@ -1298,7 +1291,7 @@
                         {
                             "a": "A",
                             "o": "text:equal",
-                            "b": "{{4.orderNumber}}"
+                            "b": "{{3.orderNumber}}"
                         }
                     ]
                 ],
@@ -1307,14 +1300,7 @@
             "metadata": {
                 "designer": {
                     "x": -175,
-                    "y": -271,
-                    "messages": [
-                        {
-                            "category": "reference",
-                            "severity": "warning",
-                            "message": "Referenced module 'Google Sheets - Search Rows' [4] is not accessible."
-                        }
-                    ]
+                    "y": -271
                 },
                 "restore": {
                     "parameters": {
