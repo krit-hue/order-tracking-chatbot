@@ -57,7 +57,7 @@
                 "messages": [
                     {
                         "role": "system",
-                        "content": "You are an order tracking assistant.\nExtract the customer's order number from their message.\nReturn ONLY valid JSON with this schema:\n{ \"orderNumber\": \"string-or-null\" }\nRules:\n- If no order number is present, use null.\n- Do not include any extra keys or text."
+                        "content": "You are an order tracking assistant. Extract the customer's order number from their message.\n\nYou must respond with ONLY a single line of valid JSON and nothing else. No markdown, no code blocks, no explanation, no extra text.\n\nSchema: {\"orderNumber\": \"string-or-null\"}\n\nRules:\n- If an order number is found (e.g. 2001, #2002), return it as a string: {\"orderNumber\": \"2001\"}\n- If no order number is present, return: {\"orderNumber\": null}\n- Output nothing else—no backticks, no labels, no punctuation outside the JSON."
                     },
                     {
                         "role": "user",
@@ -1240,7 +1240,7 @@
                 "type": ""
             },
             "mapper": {
-                "json": "{{ifempty(2.choices[0].message.content; '{\\\"orderNumber\\\": null}')}}"
+                "json": "{{ifempty(2.Result; '{\\\"orderNumber\\\": null}')}}"
             },
             "metadata": {
                 "designer": {
@@ -1280,12 +1280,13 @@
             },
             "mapper": {
                 "from": "drive",
+                "limit": "1",
                 "valueRenderOption": "FORMATTED_VALUE",
                 "dateTimeRenderOption": "FORMATTED_STRING",
                 "spreadsheetId": "1HWqWdKEa4mvIdCcQJ7SvsJekT9WpsHINZfXxHa-rfkM",
                 "sheetId": "Orders",
                 "includesHeaders": true,
-                "tableFirstRow": "A1:ZZZ1",
+                "tableFirstRow": "A1:ZZ1",
                 "filter": [
                     [
                         {
@@ -93149,7 +93150,7 @@
         }
     ],
     "metadata": {
-        "instant": true,
+        "instant": false,
         "version": 1,
         "scenario": {
             "roundtrips": 1,
