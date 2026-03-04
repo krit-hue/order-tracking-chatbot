@@ -140,7 +140,7 @@
     renderTyping();
 
     try {
-      if (WEBHOOK_URL && WEBHOOK_URL !== "https://hook.us2.make.com/xjehs9oupt992pvcva2v5rq1xhj161xs") {
+      if (WEBHOOK_URL && WEBHOOK_URL !== "PASTE_YOUR_WEBHOOK_URL_HERE") {
         const sessionId = getSessionId();
         const data = await callWebhook(text);
 
